@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .canvas {
+            box-shadow: 0 0 5px 5px #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="canvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.querySelector('.canvas')
+        const ctx = canvas.getContext('2d')
+
+
+
+
+        function Snake(ctx) {
+            this.body = [{ x: 280, y: 300 }, { x: 260, y: 300 }]
+            this.width = 20
+            this.height = 20
+            this.x = 300
+            this.y = 300
+            this.ctx = ctx
+            this.speed = 20;
+        }
+        //头部绘画
+        Snake.prototype.drawhead = function () {
+            this.ctx.beginPath()
+            this.ctx.fillStyle = 'red'
+            this.ctx.fillRect(this.x, this.y, this.width, this.height)
+            this.ctx.strokeRect(this.x, this.y, this.width, this.height)
+            this.ctx.closePath()
+        }
+        //身体绘画
+        Snake.prototype.drawbody = function (x, y) {
+            this.ctx.beginPath()
+            this.ctx.fillStyle = 'skyblue'
+            this.ctx.fillRect(x, y, this.width, this.height)
+            this.ctx.strokeRect(x, y, this.width, this.height)
+            this.ctx.closePath()
+        }
+        //绘画方法
+        Snake.prototype.draw = function () {
+            for (let i of this.body) {
+                this.drawbody(i.x, i.y)
+            }
+            this.drawhead()
+        }
+        //移动方法
+        Snake.prototype.move = function (dir = 37, canvas) {
+            if (dir >= 37 && dir <= 40) {
+                this.ctx.clearRect(0, 0, canvas.width, canvas.height)
+            }
+            switch (dir) {
+                case 37: {
+                    this.body.unshift({ x: this.x, y: this.y })
+                    this.body.splice(this.body.length - 1, 1)
+                    this.x -= this.speed
+                    this.draw()
+                    break;
+                }
+                case 38: {
+                    this.body.unshift({ x: this.x, y: this.y })
+                    this.body.splice(this.body.length - 1, 1)
+                    this.y -= this.speed
+                    this.draw()
+                    break;
+                }
+                case 39: {
+                    this.body.unshift({ x: this.x, y: this.y })
+                    this.body.splice(this.body.length - 1, 1)
+                    this.x += this.speed
+                    this.draw()
+                    break;
+                }
+                case 40: {
+                    this.body.unshift({ x: this.x, y: this.y })
+                    this.body.splice(this.body.length - 1, 1)
+                    this.y += this.speed
+                    this.draw()
+                    break;
+                }
+            }
+
+        }
+        //改变蛇的移动方向
+        document.onkeydown = function snakemove(e) {
+            dir = e.keyCode
+        }
+        //让蛇自行移动
+        let timer = setInterval(() => {
+            snake.move(dir, canvas)
+            food()
+            eat()
+            gameover()
+        }, 150)
+        //随机生成食物
+        //食物随机函数
+        function ran() {
+            foodx = (Math.floor(Math.random() * (800 - 20)))
+            foody = (Math.floor(Math.random() * (600 - 20)))
+        }
+        function food() {
+            ctx.beginPath()
+            ctx.fillStyle = 'skyblue'
+            ctx.fillRect(foodx, foody, 20, 20)
+            ctx.closePath()
+        }
+        //碰撞监测
+        function rectcollision(x, y) {
+            this.arrx = [x.x, x.y, x.x + x.width, x.y + x.height]
+            this.arry = [y.x, y.y]
+            let equalnum = 0
+            let istrue = arry.filter((item, index) => {
+                if (index == 0 && (item >= arrx[0] - x.width && item <= arrx[2])) {
+                    equalnum++
+                }
+                if (index == 1 && (item >= arrx[1] - x.height && item <= arrx[3])) {
+                    equalnum++
+                    if (equalnum == 2)
+                        return item
+                }
+            })
+
+            // 
+            if (istrue.length != 0) {
+                return true
+            }
+            return false
+        }
+        //游戏结束
+        function gameover() {
+            //边缘碰撞
+            if (snake.x + 20 > 800 || snake.y + 20 > 600 || snake.x < 0 || snake.y < 0) {
+                clearInterval(timer)
+                alert('游戏结束')
+                return
+            }
+            //身体碰撞
+            head = { x: snake.x, y: snake.y, width: snake.width - 1, height: snake.height - 1 }
+            snake.body.forEach(item => {
+                onebody = { x: item.x, y: item.y }
+                if (rectcollision(head, onebody)) {
+                    clearInterval(timer)
+                    alert('游戏结束')
+                }
+            })
+        }
+        //头部与食物发生碰撞，记为吃食物成功
+        function eat() {
+            head = { x: snake.x, y: snake.y, width: snake.width, height: snake.height }
+            foods = { x: foodx, y: foody }
+            if (rectcollision(head, foods)) {
+                ran()
+                food()
+                let last = snake.body[snake.body.length - 1]
+                switch (dir) {
+                    case 37: {
+                        snake.body.push({ x: last.x + 20, y: last.y })
+                        break
+                    }
+                    case 38: {
+                        snake.body.push({ x: last.x, y: last.y + 20 })
+                        break
+                    }
+                    case 39: {
+                        snake.body.push({ x: last.x - 20, y: last.y })
+                        break
+                    }
+                    case 40: {
+                        snake.body.push({ x: last.x, y: last.y - 20 })
+                        break
+                    }
+                }
+            }
+        }
+
+
+        let foodx, foody
+        const snake = new Snake(ctx)
+        snake.draw()
+        //默认蛇的移动方向
+        let dir = 39
+        ran()
+        food()
+    </script>
+</body>
+
+</html>
